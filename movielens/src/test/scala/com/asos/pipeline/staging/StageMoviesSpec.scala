@@ -19,7 +19,7 @@ class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
   spark.sparkContext.setLogLevel("ERROR")
   lazy val stageMovies = new StageMovies(testResourcePath)
   import spark.implicits._
-  var movies = spark.emptyDataset[StagedMovie]
+  var movies = spark.emptyDataset[Movie]
 
   override def beforeAll(): Unit = {
     movies = stageMovies.read()
@@ -60,6 +60,7 @@ class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
       .count() === 1
   }
 
+  //todo refactor to TransformMovies
   it should "display each genre as a separate row" in {
     assert(
       movies.select($"movieId").distinct().count === 25 &&

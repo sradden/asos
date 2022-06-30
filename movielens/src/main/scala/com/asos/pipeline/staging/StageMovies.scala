@@ -1,34 +1,25 @@
 package com.asos.pipeline.staging
 
 import org.apache.spark.sql.functions.{col, explode, regexp_extract, split}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
 
-/**
- * structure of the movie information when read from the supplied path
- * @param movieId
- * @param title
- * @param genre
- */
-private case class Movie (movieId: String, title: String, genre: String)
+class StageMovies(path: String) extends Stage[Dataset[Movie]] {
 
-class StageMovies(path: String) extends Stage[Dataset[StagedMovie]] {
-
-  override def write(data: Dataset[StagedMovie]): Unit = {
+  override def write(data: Dataset[Movie]): Unit = {
     data.write
       .format("delta")
       .save("spark-warehouse/delta/movies")
   }
 
   /**
-   * Reads information about movies in a [[Dataset]]
-   * @return a [[Dataset[StagedMovie]] ready to be written to the staging area.
-   */
-  override def read(): Dataset[StagedMovie] = {
-    spark
-      .read
+    * Reads information about movies in a [[Dataset]]
+    * @return a [[Dataset[StagedMovie]] ready to be written to the staging area.
+    */
+  override def read(): Dataset[Movie] = {
+    spark.read
       .option("header", true)
       .option("delimiter", ",")
-      .schema(Encoders.product[Movie].schema)
+      .schema(Encoders.product[_Movie].schema)
       .csv(path)
       .transform(forStaging())
 
@@ -36,16 +27,27 @@ class StageMovies(path: String) extends Stage[Dataset[StagedMovie]] {
   }
 
   /**
-   * asStagedMovie performs a series of transformations on the specified [[DataFrame]] to
-   * convert it into a [[Dataset[StagedMovie]]
-   * @return
-   */
-  private def forStaging(): DataFrame => Dataset[StagedMovie] =
+    * asStagedMovie performs a series of transformations on the specified [[DataFrame]] to
+    * convert it into a [[Dataset[StagedMovie]]
+    * @return
+    */
+  private def forStaging(): DataFrame => Dataset[Movie] =
     df => {
       df.withColumn("movieId", col("movieId").cast("int"))
-        .withColumn("yearOfRelease",
-          regexp_extract(col("title"), "(\\d+)", 1).cast("int"))
-        .withColumn("genre", explode(split(col("genre"), "[|]"))).as("genre")
-        .as[StagedMovie](Encoders.product[StagedMovie])
+        .withColumn(
+          "yearOfRelease",
+          regexp_extract(col("title"), "(\\d+)", 1).cast("int")
+        )
+        .withColumn("genre", explode(split(col("genre"), "[|]")))
+        .as("genre")
+        .as[Movie](Encoders.product[Movie])
     }
+
+  /**
+    * structure of the movie information when read from the supplied path
+    * @param movieId
+    * @param title
+    * @param genre
+    */
+  private case class _Movie(movieId: String, title: String, genre: String)
 }
