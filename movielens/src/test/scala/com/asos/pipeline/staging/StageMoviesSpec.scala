@@ -10,14 +10,14 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
 
   private val testResourcePath = "src/test/resources/movies.csv"
-  lazy val stageMovies = new StageMovies(testResourcePath)
   lazy val spark = SparkSession
     .builder()
     .appName(this.getClass.getName)
     .master("local[*]")
     .getOrCreate()
-  spark.sparkContext.setLogLevel("ERROR")
 
+  spark.sparkContext.setLogLevel("ERROR")
+  lazy val stageMovies = new StageMovies(testResourcePath)
   import spark.implicits._
   var movies = spark.emptyDataset[StagedMovie]
 

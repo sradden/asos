@@ -1,8 +1,10 @@
 package com.asos.pipeline.staging
 
 import org.apache.spark.sql.catalyst.dsl.expressions.StringToAttributeConversionHelper
-import org.apache.spark.sql.functions.{col, from_unixtime, to_date, unix_timestamp}
+import org.apache.spark.sql.functions.{col, from_unixtime, to_date, to_timestamp, unix_timestamp}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
+
+import java.sql.Timestamp
 
 class StageRatings(path: String) extends Stage[Dataset[Ratings]] {
   /**
@@ -30,7 +32,7 @@ class StageRatings(path: String) extends Stage[Dataset[Ratings]] {
       df.withColumn("userId", col("userId").cast("int"))
         .withColumn("movieId", col("movieId").cast("int"))
         .withColumn("rating", col("rating").cast("double"))
-        .withColumn("timestamp", from_unixtime(col("timestamp"), "dd-MM-yyyy HH:mm:ss"))
+        .withColumn("timestamp", to_timestamp(from_unixtime(col("timestamp"))))
         .as[Ratings](Encoders.product[Ratings])
     }
 }

@@ -8,7 +8,7 @@ import org.apache.spark.sql.{Dataset, SparkSession}
  * @tparam T generic type parameter that denotes a type to be staged
  */
 trait Stage[T] {
-  lazy val spark = SparkSession.builder().getOrCreate()
+  val spark = SparkSession.builder().master("local[*]").getOrCreate()
   def write(data: T) : Unit
   def read(): T
 }
