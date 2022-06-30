@@ -1,3 +1,5 @@
-/movielens/target/
+movielens/target
 .idea/
 movielens.iml
+.scalafmt.conf
+movielens/src/test/resources/

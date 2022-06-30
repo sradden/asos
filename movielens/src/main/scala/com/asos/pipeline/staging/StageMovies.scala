@@ -1,26 +1,38 @@
 package com.asos.pipeline.staging
 
-import org.apache.spark.sql.catalyst.dsl.expressions.{DslExpression, StringToAttributeConversionHelper}
 import org.apache.spark.sql.functions.{col, explode, regexp_extract, split}
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.{Column, DataFrame, Dataset, Encoders, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SparkSession}
 
+/**
+ * structure of the movie information when read from the supplied path
+ * @param movieId
+ * @param title
+ * @param genre
+ */
 private case class Movie (movieId: String, title: String, genre: String)
 
-class StageMovies() extends Stage[Dataset[StagedMovie]] {
+class StageMovies(path: String) extends Stage[Dataset[StagedMovie]] {
 
-  private lazy val spark = SparkSession.builder().master("local").getOrCreate()
+  override def write(data: Dataset[StagedMovie]): Unit = {
+    data.write
+      .format("delta")
+      .save("spark-warehouse/delta/movies")
+  }
 
-  override def write(data: Dataset[StagedMovie]): Unit = ???
-
-  override def read(path: String): Dataset[StagedMovie] = {
+  /**
+   * Reads information about movies in a [[Dataset]]
+   * @return a [[Dataset[StagedMovie]] ready to be written to the staging area.
+   */
+  override def read(): Dataset[StagedMovie] = {
     spark
       .read
       .option("header", true)
       .option("delimiter", ",")
       .schema(Encoders.product[Movie].schema)
       .csv(path)
-      .transform(asStagedMovie())
+      .transform(forStaging())
+
+    // todo filter filepath already ingested to detect new files only
   }
 
   /**
@@ -28,7 +40,7 @@ class StageMovies() extends Stage[Dataset[StagedMovie]] {
    * convert it into a [[Dataset[StagedMovie]]
    * @return
    */
-  private def asStagedMovie(): DataFrame => Dataset[StagedMovie] =
+  private def forStaging(): DataFrame => Dataset[StagedMovie] =
     df => {
       df.withColumn("movieId", col("movieId").cast("int"))
         .withColumn("yearOfRelease",

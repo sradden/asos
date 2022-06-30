@@ -1,6 +1,6 @@
 package com.asos.pipeline.staging
 
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 /**
  * Trait that allows implementors to stage a specific type
@@ -8,6 +8,7 @@ import org.apache.spark.sql.Dataset
  * @tparam T generic type parameter that denotes a type to be staged
  */
 trait Stage[T] {
+  lazy val spark = SparkSession.builder().getOrCreate()
   def write(data: T) : Unit
-  def read(path: String): T
+  def read(): T
 }
