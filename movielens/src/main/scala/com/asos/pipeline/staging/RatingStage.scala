@@ -3,11 +3,11 @@ package com.asos.pipeline.staging
 import org.apache.spark.sql.functions.{col, from_unixtime, to_timestamp}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
 
-class StageRatings(path: String) extends Stage[Dataset[Rating]] {
+class RatingStage() extends Stage[Dataset[Rating]] {
 
   override def write(data: Dataset[Rating]): Unit = ???
 
-  override def read(): Dataset[Rating] = {
+  override def read(path: String): Dataset[Rating] = {
 
     spark.read
       .option("header", true)

@@ -3,7 +3,7 @@ package com.asos.pipeline.staging
 import org.apache.spark.sql.functions.{col, from_unixtime, to_timestamp}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
 
-class StageTags(path: String) extends Stage[Dataset[Tag]] {
+class TagStage() extends Stage[Dataset[Tag]] {
   override def write(data: Dataset[Tag]): Unit = ???
 
   /**
@@ -11,7 +11,7 @@ class StageTags(path: String) extends Stage[Dataset[Tag]] {
    * specified at class creation
    * @return
    */
-  override def read(): Dataset[Tag] = {
+  override def read(path: String): Dataset[Tag] = {
     spark.read
       .option("header", true)
       .option("delimiter", ",")

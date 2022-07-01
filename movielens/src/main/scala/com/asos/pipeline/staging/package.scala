@@ -36,17 +36,25 @@ package object staging {
   )
 
   /**
-   * A tag is user-generated metadata (typically a single word or short phrase) about a movie applied by a user.
-   *
-   * @param userId id of the user who applied the tag
-   * @param movieId id of the movie the tag applies to
-   * @param tag metadata about the movie
-   * @param timestamp epoch since midnight Coordinated Universal Time (UTC) of January 1, 1970.
-   */
+    * A tag is user-generated metadata (typically a single word or short phrase) about a movie applied by a user.
+    *
+    * @param userId id of the user who applied the tag
+    * @param movieId id of the movie the tag applies to
+    * @param tag metadata about the movie
+    * @param timestamp epoch since midnight Coordinated Universal Time (UTC) of January 1, 1970.
+    */
   case class Tag(
       userId: Int,
       movieId: Int,
       tag: String,
       timestamp: Timestamp
   )
+
+  /**
+    * structure of the movie information when read from the supplied path
+    * @param movieId
+    * @param title
+    * @param genre
+    */
+  case class RawMovie(movieId: String, title: String, genre: String)
 }

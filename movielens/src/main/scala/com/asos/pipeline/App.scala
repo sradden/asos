@@ -27,22 +27,22 @@ object App {
   }
 
   private def stageMovies(path: String): Dataset[Movie] = {
-    val stageMovies = new StageMovies(s"$path/movies.csv")
-    val movies = stageMovies.read()
+    val stageMovies = new MovieStage()
+    val movies = stageMovies.read(s"$path/movies.csv")
     stageMovies.write(movies)
     movies
   }
 
   private def stageTags(path: String): Dataset[staging.Tag] = {
-    val stageTags = new StageTags(s"$path/tags.csv")
-    val tags = stageTags.read()
+    val stageTags = new TagStage()
+    val tags = stageTags.read(s"$path/tags.csv")
     stageTags.write(tags)
     tags
   }
 
   private def stageRatings(path: String): Dataset[Rating] = {
-    val stageRatings = new StageRatings(s"$path/ratings.csv")
-    val ratings = stageRatings.read()
+    val stageRatings = new RatingStage()
+    val ratings = stageRatings.read(s"$path/ratings.csv")
     stageRatings.write(ratings)
     ratings
   }

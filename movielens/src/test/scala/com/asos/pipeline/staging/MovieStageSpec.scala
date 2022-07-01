@@ -5,9 +5,9 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 /**
   *
-  * Specification testing for [[StageMovies]]
+  * Specification testing for [[MovieStage]]
   */
-class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
+class MovieStageSpec extends FlatSpec with BeforeAndAfterAll {
 
   private val testResourcePath = "src/test/resources/movies.csv"
   lazy val spark = SparkSession
@@ -17,12 +17,12 @@ class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
     .getOrCreate()
 
   spark.sparkContext.setLogLevel("ERROR")
-  lazy val stageMovies = new StageMovies(testResourcePath)
+  lazy val stageMovies = new MovieStage()
   import spark.implicits._
   var movies = spark.emptyDataset[Movie]
 
   override def beforeAll(): Unit = {
-    movies = stageMovies.read()
+    movies = stageMovies.read(testResourcePath)
     super.beforeAll()
   }
 
@@ -40,8 +40,7 @@ class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
 
   it should "throw and exception when the specified path does not exist" in {
     intercept[Exception] {
-      val sm = new StageMovies("foobar.csv")
-      sm.read()
+      stageMovies.read("foobar.csv")
     }
   }
 
@@ -67,4 +66,9 @@ class StageMoviesSpec extends FlatSpec with BeforeAndAfterAll {
         movies.filter("movieId = 1").count() === 5
     )
   }
+
+  it should "write movie data to the staging area" in {
+    stageMovies.write(movies)
+  }
+
 }

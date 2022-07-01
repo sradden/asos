@@ -10,5 +10,5 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 trait Stage[T] {
   val spark = SparkSession.builder().master("local[*]").getOrCreate()
   def write(data: T) : Unit
-  def read(): T
+  def read(path: String): T
 }

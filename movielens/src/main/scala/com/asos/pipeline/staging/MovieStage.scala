@@ -3,19 +3,19 @@ package com.asos.pipeline.staging
 import org.apache.spark.sql.functions.{col, explode, regexp_extract, split}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
 
-class StageMovies(path: String) extends Stage[Dataset[Movie]] {
+class MovieStage() extends Stage[Dataset[Movie]] {
 
   override def write(data: Dataset[Movie]): Unit = {
     data.write
       .format("delta")
-      .save("spark-warehouse/delta/movies")
+      .save("spark-warehouse/delta/movies-bronze")
   }
 
   /**
     * Reads information about movies in a [[Dataset]]
     * @return a [[Dataset[StagedMovie]] ready to be written to the staging area.
     */
-  override def read(): Dataset[Movie] = {
+  override def read(path: String): Dataset[Movie] = {
     spark.read
       .option("header", true)
       .option("delimiter", ",")

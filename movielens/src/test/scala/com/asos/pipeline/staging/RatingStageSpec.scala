@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, IntegerType, TimestampType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-class StageRatingsSpec extends FlatSpec with BeforeAndAfterAll {
+class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
 
   private val testResourcePath = "src/test/resources/ratings.csv"
   lazy val spark = SparkSession.builder()
@@ -12,13 +12,13 @@ class StageRatingsSpec extends FlatSpec with BeforeAndAfterAll {
     .master("local[*]")
     .getOrCreate()
 
-  lazy val stageRatings = new StageRatings(testResourcePath)
+  lazy val stageRatings = new RatingStage()
 
   import spark.implicits._
   var ratings = spark.emptyDataset[Rating]
 
   override def beforeAll(): Unit = {
-    ratings = stageRatings.read()
+    ratings = stageRatings.read(testResourcePath)
     super.beforeAll()
   }
 
@@ -37,7 +37,7 @@ class StageRatingsSpec extends FlatSpec with BeforeAndAfterAll {
 
   it should "throw and exception when the specified path does not exist" in {
     intercept[Exception] {
-      new StageRatings("foobar.csv").read()
+      stageRatings.read("foobar.csv")
     }
   }
 
