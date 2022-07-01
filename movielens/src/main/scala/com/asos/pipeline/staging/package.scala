@@ -57,4 +57,18 @@ package object staging {
     * @param genre
     */
   case class RawMovie(movieId: String, title: String, genre: String)
+
+  /**
+    * structure of a tag when read from supplied path
+    * @param userId
+    * @param movieId
+    * @param tag
+    * @param timestamp
+    */
+  case class RawTag(
+      userId: String,
+      movieId: String,
+      tag: String,
+      timestamp: String
+  )
 }

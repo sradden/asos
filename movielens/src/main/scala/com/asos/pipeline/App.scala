@@ -26,28 +26,28 @@ object App {
     top10FilmsByAvgRating(movies, stageRatings(path))
   }
 
-  private def stageMovies(path: String): Dataset[Movie] = {
+  private def stageMovies(path: String): DataFrame = {
     val stageMovies = new MovieStage()
     val movies = stageMovies.read(s"$path/movies.csv")
     stageMovies.write(movies)
     movies
   }
 
-  private def stageTags(path: String): Dataset[staging.Tag] = {
+  private def stageTags(path: String): DataFrame = {
     val stageTags = new TagStage()
     val tags = stageTags.read(s"$path/tags.csv")
     stageTags.write(tags)
     tags
   }
 
-  private def stageRatings(path: String): Dataset[Rating] = {
+  private def stageRatings(path: String): DataFrame = {
     val stageRatings = new RatingStage()
     val ratings = stageRatings.read(s"$path/ratings.csv")
     stageRatings.write(ratings)
     ratings
   }
 
-  private def splitMovieGenres(movies: Dataset[Movie]): Dataset[Movie] = {
+  private def splitMovieGenres(movies: DataFrame): DataFrame = {
     movies.transform(new TransformMovies().splitGenre(col("genre")))
   }
 
@@ -59,7 +59,7 @@ object App {
    * @return top 10 films ordered by the highest avg rating descending
    */
   private def top10FilmsByAvgRating(
-      movies: Dataset[Movie],
-      ratings: Dataset[Rating]
+      movies: DataFrame,
+      ratings: DataFrame
   ): DataFrame = ???
 }

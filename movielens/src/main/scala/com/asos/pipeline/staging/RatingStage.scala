@@ -3,11 +3,11 @@ package com.asos.pipeline.staging
 import org.apache.spark.sql.functions.{col, from_unixtime, to_timestamp}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
 
-class RatingStage() extends Stage[Dataset[Rating]] {
+class RatingStage() extends Stage {
 
-  override def write(data: Dataset[Rating]): Unit = ???
+  override def write(data: DataFrame): Unit = ???
 
-  override def read(path: String): Dataset[Rating] = {
+  override def read(path: String): DataFrame = {
 
     spark.read
       .option("header", true)
@@ -17,13 +17,13 @@ class RatingStage() extends Stage[Dataset[Rating]] {
       .transform(forStaging())
   }
 
-  private def forStaging(): DataFrame => Dataset[Rating] =
+  private def forStaging(): DataFrame => DataFrame =
     df => {
       df.withColumn("userId", col("userId").cast("int"))
         .withColumn("movieId", col("movieId").cast("int"))
         .withColumn("rating", col("rating").cast("double"))
         .withColumn("timestamp", to_timestamp(from_unixtime(col("timestamp"))))
-        .as[Rating](Encoders.product[Rating])
+        //.as[Rating](Encoders.product[Rating])
     }
 
   /**

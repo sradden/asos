@@ -1,29 +1,17 @@
 package com.asos.pipeline.staging
 
 import org.apache.spark.sql.functions.{col, explode, regexp_extract, split}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SaveMode}
 
-class MovieStage() extends Stage[Dataset[Movie]] {
+class MovieStage() extends Stage {
 
-  override def write(data: Dataset[Movie]): Unit = {
-    data.write
+  override def write(data: DataFrame): Unit = {
+    data
+      .transform(forStaging())
+      .write
+      .mode(SaveMode.Overwrite)
       .format("delta")
       .save("spark-warehouse/delta/movies-bronze")
-  }
-
-  /**
-    * Reads information about movies in a [[Dataset]]
-    * @return a [[Dataset[StagedMovie]] ready to be written to the staging area.
-    */
-  override def read(path: String): Dataset[Movie] = {
-    spark.read
-      .option("header", true)
-      .option("delimiter", ",")
-      .schema(Encoders.product[_Movie].schema)
-      .csv(path)
-      .transform(forStaging())
-
-    // todo filter filepath already ingested to detect new files only
   }
 
   /**
@@ -44,10 +32,11 @@ class MovieStage() extends Stage[Dataset[Movie]] {
     }
 
   /**
-    * structure of the movie information when read from the supplied path
-    * @param movieId
-    * @param title
-    * @param genre
+    * Reads information about movies in a [[DataFrame]]
+    * @return a [[DataFrame] ready to be written to the staging area.
     */
-  private case class _Movie(movieId: String, title: String, genre: String)
+  override def read(path: String = "spark-warehouse/delta/movies-bronze"): DataFrame = {
+    // todo filter filepath already ingested to detect new files only
+    super.read(path)
+  }
 }

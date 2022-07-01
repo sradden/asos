@@ -13,9 +13,7 @@ class TagStageSpec extends FlatSpec with BeforeAndAfterAll {
     .getOrCreate()
   private lazy val stageTags = new TagStage()
   private val testResourcePath = "src/test/resources/tags.csv"
-
-  import spark.implicits._
-  var _tags = spark.emptyDataset[Tag]
+  var _tags = spark.emptyDataFrame
 
   override def beforeAll(): Unit = {
     _tags = stageTags.read(testResourcePath)

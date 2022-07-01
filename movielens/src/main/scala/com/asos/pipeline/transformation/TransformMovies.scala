@@ -6,10 +6,9 @@ import org.apache.spark.sql.{Column, DataFrame, Dataset, Encoders}
 
 class TransformMovies {
 
-  def splitGenre(g: Column): Dataset[Movie] => Dataset[Movie] =
+  def splitGenre(g: Column): DataFrame => DataFrame =
     df => {
       df.withColumn("genre", explode(split(g, "[|]")))
         .as("genre")
-        .as[Movie](Encoders.product[Movie])
     }
 }

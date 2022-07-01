@@ -15,7 +15,7 @@ class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
   lazy val stageRatings = new RatingStage()
 
   import spark.implicits._
-  var ratings = spark.emptyDataset[Rating]
+  var ratings = spark.emptyDataFrame
 
   override def beforeAll(): Unit = {
     ratings = stageRatings.read(testResourcePath)
