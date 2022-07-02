@@ -1,9 +1,8 @@
 package com.asos.pipeline.staging
 
 import org.apache.spark.sql.functions.{col, from_unixtime, to_timestamp}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SaveMode}
-
-import java.sql.Timestamp
+import org.apache.spark.sql.{DataFrame, SaveMode}
+import io.delta.tables._
 
 class RatingStage() extends Stage {
 
@@ -18,11 +17,8 @@ class RatingStage() extends Stage {
       .write
       .mode(SaveMode.Overwrite)
       .format("delta")
+      .partitionBy("movieId")
       .save(DELTA_TABLE)
-  }
-
-  override def read(path: String = DELTA_TABLE): DataFrame = {
-    super.read(DELTA_TABLE)
   }
 
   private def forStaging(): DataFrame => DataFrame =
@@ -34,12 +30,35 @@ class RatingStage() extends Stage {
     }
 
   /**
-   * performs an upsert to the rating staging table.
-   * using userId and movieId as the primary key it updates an existing row if it exists
-   * otherwise inserts a new row
-   * @param userId the id of the user giving the rating
-   * @param movieId the id of the movie being rated
-   * @return a [[DataFrame]] with the result of the upsert
-   */
-  def upsert(userId: Int, movieId: Int, values: (Double, Timestamp)): DataFrame = ???
+    * performs an upsert to the rating staging table.
+    * using userId and movieId as the primary key it updates an existing row if it exists
+    * otherwise inserts a new row
+    * @param newRating [[DataFrame]] containing a new rating
+    */
+  def upsert(newRating: DataFrame): Unit = {
+
+    val deltaTblOld = DeltaTable.forPath(DELTA_TABLE)
+    deltaTblOld.as("old")
+      .merge(
+        newRating.as("new"),
+        "old.userId = new.userId and old.movieId = new.movieId"
+      )
+      .whenMatched
+      .updateExpr(Map(
+        "rating" -> "new.rating",
+        "timestamp" -> "new.timestamp"
+      ))
+      .whenNotMatched
+      .insertExpr(Map(
+        "userId"-> "new.userId",
+        "movieId" -> "new.movieId",
+        "rating" -> "new.rating",
+        "timestamp" -> "new.timestamp"
+      ))
+      .execute()
+  }
+
+  override def read(path: String = DELTA_TABLE): DataFrame = {
+    super.read(DELTA_TABLE)
+  }
 }

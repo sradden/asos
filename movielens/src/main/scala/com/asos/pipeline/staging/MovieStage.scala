@@ -35,7 +35,7 @@ class MovieStage() extends Stage {
 
   /**
     * Reads information about movies in a [[DataFrame]]
-    * @return a [[DataFrame] ready to be written to the staging area.
+    * @return a [[DataFrame]] ready to be written to the staging area.
     */
   override def read(path: String = DELTA_TABLE): DataFrame = {
     super.read(DELTA_TABLE)

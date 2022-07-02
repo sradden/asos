@@ -1,9 +1,13 @@
 package com.asos.pipeline.staging
 
 import com.asos.pipeline.TestDefaults
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, IntegerType, TimestampType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+
+import java.sql.Timestamp
+import java.time.LocalDateTime
 
 class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
 
@@ -11,7 +15,7 @@ class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
     .appName(this.getClass.getName)
     .master("local[*]")
     .getOrCreate()
-
+  import spark.implicits._
   lazy val stage = new RatingStage()
   var ratings = spark.emptyDataFrame
 
@@ -29,7 +33,7 @@ class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
     }
   }
 
-  "StageRatings" should "write ratings information to the staging area" in {
+  "RatingStage" should "write ratings information to the staging area" in {
     stage.write(ratings)
     assert(stage.read().count().!=(0))
   }
@@ -52,5 +56,50 @@ class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
         |and to_date(timestamp, 'yyyy-MM-dd') = '2000-07-30'
         |""".stripMargin)
     .count() === 1)
+  }
+
+  it should "update the existing rating from userid 7 for movieId 50 from 4.5 to 3.2" in {
+
+    assert(stage.read().filter(
+      """
+        |userId = 7
+        |and movieId = 50
+        |and rating = 4.5
+        |""".stripMargin
+    ).count() == 1)
+
+    stage.upsert(
+      Seq((7, 50, 3.2, Timestamp.valueOf(LocalDateTime.now()))).toDF("userId","movieId","rating","timestamp")
+    )
+
+    assert(stage.read().filter(
+      """
+        |userId = 7
+        |and movieId = 50
+        |and rating = 3.2
+        |""".stripMargin
+    ).count() == 1)
+  }
+
+  it should "insert a new rating from userId 101 for movieId 50" in {
+    assert(stage.read().filter(
+      """
+        |userId = 101
+        |and movieId = 50
+        |""".stripMargin
+    ).count() == 0)
+
+    stage.upsert(
+      Seq((101, 50, 9.1, Timestamp.valueOf(LocalDateTime.now()))).toDF("userId","movieId","rating","timestamp")
+    )
+
+    assert(stage.read().filter(
+      """
+        |userId = 101
+        |and movieId = 50
+        |and rating = 9.1
+        |""".stripMargin
+    ).count() == 1)
+
   }
 }
