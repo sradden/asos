@@ -1,5 +1,6 @@
 package com.asos.pipeline.staging
 
+import com.asos.pipeline.TestDefaults
 import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 

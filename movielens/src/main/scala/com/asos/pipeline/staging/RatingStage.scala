@@ -1,20 +1,28 @@
 package com.asos.pipeline.staging
 
 import org.apache.spark.sql.functions.{col, from_unixtime, to_timestamp}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoders}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SaveMode}
+
+import java.sql.Timestamp
 
 class RatingStage() extends Stage {
 
-  override def write(data: DataFrame): Unit = ???
+  // todo config class
+  private val DELTA_TABLE = "out/delta/ratings-bronze"
 
-  override def read(path: String): DataFrame = {
+  override def write(data: DataFrame): Unit = {
+    // todo filter filepath already ingested to detect new files only using filename function
 
-    spark.read
-      .option("header", true)
-      .option("delimiter", ",")
-      .schema(Encoders.product[this._Rating].schema)
-      .csv(path)
+    data
       .transform(forStaging())
+      .write
+      .mode(SaveMode.Overwrite)
+      .format("delta")
+      .save(DELTA_TABLE)
+  }
+
+  override def read(path: String = DELTA_TABLE): DataFrame = {
+    super.read(DELTA_TABLE)
   }
 
   private def forStaging(): DataFrame => DataFrame =
@@ -23,20 +31,15 @@ class RatingStage() extends Stage {
         .withColumn("movieId", col("movieId").cast("int"))
         .withColumn("rating", col("rating").cast("double"))
         .withColumn("timestamp", to_timestamp(from_unixtime(col("timestamp"))))
-        //.as[Rating](Encoders.product[Rating])
     }
 
   /**
-    * Case class receives the raw ratings format read from path
-    * @param userId Indentifier of the user supplying the rating.
-    * @param movieId Identifier of the movie being rated.
-    * @param rating Ratings are made on a 5-star scale, with half-star increments (0.5 stars - 5.0 stars).
-    * @param timestamp Timestamps represent seconds since midnight Coordinated Universal Time (UTC) of January 1, 1970.
-    */
-  private case class _Rating(
-      userId: String,
-      movieId: String,
-      rating: String,
-      timestamp: String
-  )
+   * performs an upsert to the rating staging table.
+   * using userId and movieId as the primary key it updates an existing row if it exists
+   * otherwise inserts a new row
+   * @param userId the id of the user giving the rating
+   * @param movieId the id of the movie being rated
+   * @return a [[DataFrame]] with the result of the upsert
+   */
+  def upsert(userId: Int, movieId: Int, values: (Double, Timestamp)): DataFrame = ???
 }

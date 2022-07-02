@@ -1,4 +1,5 @@
 package com.asos.pipeline.staging
+import com.asos.pipeline.TestDefaults
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{IntegerType, StringType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
@@ -9,9 +10,6 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
   */
 class MovieStageSpec extends FlatSpec with BeforeAndAfterAll {
 
-  private val DELTA_TABLE_NAME = "spark-warehouse/delta/movies-bronze"
-  private val MOVIE_SRC_PATH = ""
-
   lazy val spark = SparkSession
     .builder()
     .appName(this.getClass.getName)
@@ -20,7 +18,6 @@ class MovieStageSpec extends FlatSpec with BeforeAndAfterAll {
 
   spark.sparkContext.setLogLevel("ERROR")
   lazy val stage = new MovieStage()
-  import spark.implicits._
   var movies = spark.emptyDataFrame
 
   override def beforeAll(): Unit = {
@@ -47,22 +44,14 @@ class MovieStageSpec extends FlatSpec with BeforeAndAfterAll {
       df.schema("movieId").dataType == IntegerType
         && df.schema("title").dataType == StringType
         && df.schema("yearOfRelease").dataType == IntegerType
-        && df.schema("genre").dataType == StringType
+        && df.schema("genres").dataType == StringType
     )
   }
 
   it should "extract the year of release from the title" in {
-    stage.read()
+    stage
+      .read()
       .filter("movieId = 1 and yearOfRelease = 1995")
       .count() === 1
   }
-/*
-  //todo refactor to TransformMovies
-  it should "display each genre as a separate row" in {
-    assert(
-      movies.select($"movieId").distinct().count === 25 &&
-        movies.filter("movieId = 1").count() === 5
-    )
-  }
-*/
 }

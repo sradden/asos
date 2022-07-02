@@ -1,5 +1,6 @@
 package com.asos.pipeline.staging
 
+import com.asos.pipeline.TestDefaults
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{IntegerType, StringType, TimestampType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
@@ -11,12 +12,12 @@ class TagStageSpec extends FlatSpec with BeforeAndAfterAll {
     .appName(this.getClass.getName)
     .master("local[*]")
     .getOrCreate()
-  private lazy val stageTags = new TagStage()
-  private val testResourcePath = "src/test/resources/tags.csv"
+
+  private lazy val stage = new TagStage()
   var _tags = spark.emptyDataFrame
 
   override def beforeAll(): Unit = {
-    _tags = stageTags.read(testResourcePath)
+    _tags = new RawTagStage().read(s"${TestDefaults.SOURCE_PATH}/tags.csv")
     super.beforeAll()
   }
 
@@ -28,22 +29,18 @@ class TagStageSpec extends FlatSpec with BeforeAndAfterAll {
     }
   }
 
-  "StageTags" should "read tag information from the specified path" in {
-    assert(_tags.count().!=(0))
-  }
-
-  it should "throw and exception when the specified path does not exist" in {
-    intercept[Exception] {
-      stageTags.read("foobar.csv")
-    }
+  "TagStage" should "write tag information to the staging area" in {
+    stage.write(_tags)
+    assert(stage.read().count().!=(0))
   }
 
   it should "convert columns to their native data types" in {
+    val df = stage.read()
     assert(
-      _tags.schema("userId").dataType == IntegerType &&
-        _tags.schema("movieId").dataType == IntegerType &&
-        _tags.schema("tag").dataType == StringType &&
-        _tags.schema("timestamp").dataType == TimestampType
+      df.schema("userId").dataType == IntegerType &&
+        df.schema("movieId").dataType == IntegerType &&
+        df.schema("tag").dataType == StringType &&
+        df.schema("timestamp").dataType == TimestampType
     )
   }
 }

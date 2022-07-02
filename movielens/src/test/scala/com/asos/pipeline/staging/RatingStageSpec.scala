@@ -1,24 +1,22 @@
 package com.asos.pipeline.staging
 
+import com.asos.pipeline.TestDefaults
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.{DoubleType, IntegerType, TimestampType}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
 
-  private val testResourcePath = "src/test/resources/ratings.csv"
   lazy val spark = SparkSession.builder()
     .appName(this.getClass.getName)
     .master("local[*]")
     .getOrCreate()
 
-  lazy val stageRatings = new RatingStage()
-
-  import spark.implicits._
+  lazy val stage = new RatingStage()
   var ratings = spark.emptyDataFrame
 
   override def beforeAll(): Unit = {
-    ratings = stageRatings.read(testResourcePath)
+    ratings = new RawRatingStage().read(s"${TestDefaults.SOURCE_PATH}/ratings.csv")
     super.beforeAll()
   }
 
@@ -31,27 +29,23 @@ class RatingStageSpec extends FlatSpec with BeforeAndAfterAll {
     }
   }
 
-  "StageRatings" should "read rating information from the specified path" in {
-    assert(ratings.count().!=(0))
-  }
-
-  it should "throw and exception when the specified path does not exist" in {
-    intercept[Exception] {
-      stageRatings.read("foobar.csv")
-    }
+  "StageRatings" should "write ratings information to the staging area" in {
+    stage.write(ratings)
+    assert(stage.read().count().!=(0))
   }
 
   it should "covert columns to their native data types" in {
+    val df = stage.read()
     assert{
-      ratings.schema("userId").dataType == IntegerType &&
-        ratings.schema("movieId").dataType == IntegerType &&
-        ratings.schema("rating").dataType == DoubleType &&
-        ratings.schema("timestamp").dataType == TimestampType
+      df.schema("userId").dataType == IntegerType &&
+        df.schema("movieId").dataType == IntegerType &&
+        df.schema("rating").dataType == DoubleType &&
+        df.schema("timestamp").dataType == TimestampType
     }
   }
 
   it should "display a rating of 4.0 submitted on 30th July 2007 for Toy Story from userId 1" in {
-    assert(ratings.filter(
+    assert(stage.read().filter(
       """
         |movieId = 1 and userId = 1
         |and rating = 4.0

@@ -26,13 +26,13 @@ package object staging {
     *              and include the year of release in parentheses. Errors and inconsistencies may
     *              exist in these titles.
     * @param yearOfRelease optional field that denotes the year the movie was released
-    * @param genre Genres are a pipe-separated list
+    * @param genres Genres are a pipe-separated list
     */
   case class Movie(
       movieId: Int,
       title: String,
       yearOfRelease: Int,
-      genre: String
+      genres: String
   )
 
   /**
@@ -54,9 +54,9 @@ package object staging {
     * structure of the movie information when read from the supplied path
     * @param movieId
     * @param title
-    * @param genre
+    * @param genres
     */
-  case class RawMovie(movieId: String, title: String, genre: String)
+  case class RawMovie(movieId: String, title: String, genres: String)
 
   /**
     * structure of a tag when read from supplied path
@@ -69,6 +69,20 @@ package object staging {
       userId: String,
       movieId: String,
       tag: String,
+      timestamp: String
+  )
+
+  /**
+    * Case class receives the raw ratings format read from path
+    * @param userId Indentifier of the user supplying the rating.
+    * @param movieId Identifier of the movie being rated.
+    * @param rating Ratings are made on a 5-star scale, with half-star increments (0.5 stars - 5.0 stars).
+    * @param timestamp Timestamps represent seconds since midnight Coordinated Universal Time (UTC) of January 1, 1970.
+    */
+  case class RawRating(
+      userId: String,
+      movieId: String,
+      rating: String,
       timestamp: String
   )
 }

@@ -3,3 +3,4 @@ movielens/target
 movielens.iml
 .scalafmt.conf
 movielens/src/test/resources/
+out

@@ -5,13 +5,17 @@ import org.apache.spark.sql.{DataFrame, Dataset, Encoders, SaveMode}
 
 class MovieStage() extends Stage {
 
+  private val DELTA_TABLE = "out/delta/movies-bronze"
   override def write(data: DataFrame): Unit = {
+
+    // todo filter filepath already ingested to detect new files only using filename function
+
     data
       .transform(forStaging())
       .write
       .mode(SaveMode.Overwrite)
       .format("delta")
-      .save("spark-warehouse/delta/movies-bronze")
+      .save(DELTA_TABLE)
   }
 
   /**
@@ -26,8 +30,6 @@ class MovieStage() extends Stage {
           "yearOfRelease",
           regexp_extract(col("title"), "(\\d+)", 1).cast("int")
         )
-        .withColumn("genre", explode(split(col("genre"), "[|]")))
-        .as("genre")
         .as[Movie](Encoders.product[Movie])
     }
 
@@ -35,8 +37,7 @@ class MovieStage() extends Stage {
     * Reads information about movies in a [[DataFrame]]
     * @return a [[DataFrame] ready to be written to the staging area.
     */
-  override def read(path: String = "spark-warehouse/delta/movies-bronze"): DataFrame = {
-    // todo filter filepath already ingested to detect new files only
-    super.read(path)
+  override def read(path: String = DELTA_TABLE): DataFrame = {
+    super.read(DELTA_TABLE)
   }
 }
